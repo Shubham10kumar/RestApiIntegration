@@ -1,41 +1,38 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin"
-    "net/http"
+	"fmt"
+	"os/exec"
+	"runtime"
+	"toddlebank2/api"
 )
 
 func main() {
-    // Initialize a Gin router
-    r := gin.Default()
+	// Start the HTTP server in a separate goroutine
+	api.StartServer()
 
-    // Define route handlers
-    r.GET("/", serveHome)
-    r.GET("/about", serveAbout)
-    r.GET("/contact", serveContact)
+	// Open the browser to access the server's URL
+	openBrowser("http://localhost:8080")
 
-    // Start the server on port 8000
-    r.Run("localhost:8000")
+	// Keep the main goroutine running
+	select {}
 }
 
-// Handler for the home route
-func serveHome(c *gin.Context) {
-    c.JSON(http.StatusOK, gin.H{
-        "message": "Welcome to our simple REST API",
-    })
-}
+func openBrowser(url string) {
+	var err error
 
-// Handler for the about route
-func serveAbout(c *gin.Context) {
-    c.JSON(http.StatusOK, gin.H{
-        "message": "About Us: We provide REST API examples",
-    })
-}
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
 
-// Handler for the contact route
-func serveContact(c *gin.Context) {
-    c.JSON(http.StatusOK, gin.H{
-        "message": "Contact Us at contact@example.com",
-    })
+	if err != nil {
+		fmt.Println("Error opening browser:", err)
+	}
 }
-
